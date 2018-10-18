@@ -1,4 +1,5 @@
 import random
+import argparse
 
 class Board:
     def __init__(self):
@@ -22,12 +23,30 @@ class Board:
                 possiblemove.append(i)
         if possiblemove != []:
             return random.choice(possiblemove)
-
+    
+    def smartmove(self, mark):
+        for i in range(9):
+            if self.squares[i] == ' ':
+                self.squares[i] = mark
+                if self.win()[0] == True:
+                    self.squares[i] = ' '
+                    return i
+                self.squares[i] = ' '
+        return -1
 
     def computermove(self):
-        n = self.randommove()
-        if self.validsquare(n):
-            self.squares[n] = 'O'  
+        move1 = self.smartmove('O')
+        move2 = self.smartmove('X')
+        move = -1
+        if move1 != -1:
+            move = move1
+        elif move2 != -1:
+            move = move2
+        else:
+            n = self.randommove()
+            if self.validsquare(n):
+                move = n
+        self.squares[move] = 'O'  
 
     def check_row(self, n):
         squares = self.squares
@@ -73,27 +92,35 @@ class Board:
         print(squares[6] + '|' + squares[7] + '|' + squares[8])
         print('------')
     
-game = Board()
-game.drawboard()
-random.seed(10)
-
-while True:
-    entry = input('Please enter a number(from 1-9): ')
-    if int(entry) not in range(1,10):
-        continue
-    if game.playermove(int(entry)-1):
-        game.drawboard()
-        over, winner = game.win()
-        if not over:
-            game.computermove()
-            game.drawboard()
-        over, winner = game.win()
+def game_loop(is_first):
+    board = Board()
+    board.drawboard()
+    turn = is_first
+    while True:
+        if turn:
+            entry = input('Please enter a number(from 1-9): ')
+            entry = int(entry)
+            if entry not in range(1,10):
+                continue
+            if not board.playermove(entry-1):
+                continue
+        else:
+            board.computermove()
+        board.drawboard()
+        over, winner = board.win()
         if over:
-            if winner == 'X':
-                print('You win')
-            elif winner == 'O':
-                print('You lose')
+            if winner == 'X' or winner == 'O':
+                print(f'{winner} wins!')
             else:
                 print('Tie')
             break
+        turn = not turn
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--first', help = 'Do you want to play first? Y/N', default='Y')
+    args = parser.parse_args()
+    game_loop(args.first == 'Y')
+
+if __name__ == '__main__':
+    main()   
